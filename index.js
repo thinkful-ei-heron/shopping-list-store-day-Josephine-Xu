@@ -1,30 +1,46 @@
+/* eslint-disable strict */
 const store = {
   items: [
-    { id: cuid(), name: 'apples', checked: false },
-    { id: cuid(), name: 'oranges', checked: false },
-    { id: cuid(), name: 'milk', checked: true },
-    { id: cuid(), name: 'bread', checked: false }
+    { id: cuid(), name: 'apples', checked: false, edit: false },
+    { id: cuid(), name: 'oranges', checked: false, edit: false },
+    { id: cuid(), name: 'milk', checked: true, edit: false },
+    { id: cuid(), name: 'bread', checked: false, edit: false }
   ],
-  hideCheckedItems: false
+  hideCheckedItems: false,
+  editItem: false
 };
 
 const generateItemElement = function (item) {
-  let itemTitle = `<span class='shopping-item shopping-item__checked'>${item.name}</span>`;
-  if (!item.checked) {
-    itemTitle = `
-     <span class='shopping-item'>${item.name}</span>
-    `;
+  let itemTitle;
+  //if edit button is not pressed, move along normally, else if edit button is pressed, 
+  // show an input form for edits
+  if (item.edit === false){
+    itemTitle = `<span class='shopping-item shopping-item__checked'>${item.name}</span>`;
+    if (!item.checked) {
+      itemTitle = `
+       <span class='shopping-item'>${item.name}</span>
+      `;
+    }
+  } else {
+    itemTitle = handleEditClicked();
   }
-
+  
   return `
     <li class='js-item-element' data-item-id='${item.id}'>
+
       ${itemTitle}
       <div class='shopping-item-controls'>
+
         <button class='shopping-item-toggle js-item-toggle'>
           <span class='button-label'>check</span>
         </button>
+
         <button class='shopping-item-delete js-item-delete'>
           <span class='button-label'>delete</span>
+        </button>
+
+        <button class='shopping-item-edit js-item-edit'>
+          <span class='button-label'>edit</span>
         </button>
       </div>
     </li>`;
@@ -61,6 +77,50 @@ const render = function () {
   // insert that HTML into the DOM
   $('.js-shopping-list').html(shoppingListItemsString);
 };
+
+
+
+
+
+//update store info once user inputs edit
+const itemEdit = function (itemId, titleEdit) {
+  let index = store.items.findIndex(item => item.id === index);
+  store.items[index].name = titleEdit;
+  store.items[index].edit = false;
+  store.editItem = false;
+}
+
+const handleEditClicked = function() {
+  return `
+  <form id="js-item-edit-form">
+    <input type="text" name="item-edit-form" class="js-edit-form" placeholder="item">
+    <button class="edit-button" type="submit">Edit Item</button>
+  </form>`;
+};
+
+
+
+//handles title edits
+const handleEditSubmit = function () {
+  $('.js-shopping-list').on('submit','#js-edit-form', function (event) {
+    event.preventDefault();
+    //gets the id of the current target item
+    let itemId = getItemIdFromElement(event.currentTarget);
+    //gets the edit input
+    let titleEdit = $(event.currentTarget).find('.js-edit-form').val();
+    
+    itemEdit(itemId, titleEdit)
+    render();
+  
+  });
+};
+
+
+
+
+
+
+
 
 const addItemToShoppingList = function (itemName) {
   store.items.push({ id: cuid(), name: itemName, checked: false });
@@ -157,6 +217,7 @@ const handleToggleFilterClick = function () {
 const handleShoppingList = function () {
   render();
   handleNewItemSubmit();
+  handleEditSubmit();
   handleItemCheckClicked();
   handleDeleteItemClicked();
   handleToggleFilterClick();
